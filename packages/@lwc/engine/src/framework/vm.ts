@@ -10,7 +10,6 @@ import {
     createComponent,
     linkComponent,
     renderComponent,
-    clearReactiveListeners,
     ComponentConstructor,
     markComponentAsDirty,
 } from './component';
@@ -56,6 +55,7 @@ import {
 import { tagNameGetter } from '../env/element';
 import { parentElementGetter, parentNodeGetter } from '../env/node';
 import { updateDynamicChildren, updateStaticChildren } from '../3rdparty/snabbdom/snabbdom';
+import { ReactiveObserver } from '@lwc/reactive-service';
 
 // Object of type ShadowRoot for instance checks
 const GlobalShadowRoot = (window as any).ShadowRoot;
@@ -89,11 +89,9 @@ export interface UninitializedVM {
     /** Adopted Children List */
     aChildren: VNodes;
     velements: VCustomElement[];
-    cmpTemplate?: Template;
     cmpProps: any;
     cmpSlots: SlotSet;
     cmpTrack: any;
-    component?: ComponentInterface;
     callHook: (
         cmp: ComponentInterface | undefined,
         fn: (...args: any[]) => any,
@@ -105,14 +103,23 @@ export interface UninitializedVM {
     isDirty: boolean;
     isRoot: boolean;
     mode: 'open' | 'closed';
-    deps: VM[][];
     toString(): string;
+
+    // perf optimization to avoid reshaping the uninitialized when initialized
+    cmpTemplate?: Template;
+    component?: ComponentInterface;
+    tro?: ReactiveObserver;
+    oar?: Record<PropertyKey, ReactiveObserver>;
 }
 
 export interface VM extends UninitializedVM {
     cmpTemplate: Template;
     component: ComponentInterface;
     cmpRoot: ShadowRoot;
+    /** Template Reactive Observer to observe values used by the selected template */
+    tro: ReactiveObserver;
+    /** Reactive Observers for each of the public @api accessors */
+    oar: Record<PropertyKey, ReactiveObserver>;
 }
 
 let idx: number = 0;
@@ -165,6 +172,15 @@ function resetComponentStateWhenRemoved(vm: VM) {
     }
     const { state } = vm;
     if (state !== VMState.disconnected) {
+        const { oar, tro } = vm;
+        // Making sure that any observing record will not trigger the rehydrated on this vm
+        if (!isNull(tro)) {
+            tro.reset();
+        }
+        // Making sure that any observing accessor record will not trigger the setter to be reinvoked
+        for (const key in oar) {
+            oar[key].reset();
+        }
         runDisconnectedCallback(vm);
         // Spec: https://dom.spec.whatwg.org/#concept-node-remove (step 14-15)
         runShadowChildNodesDisconnectedCallback(vm);
@@ -221,19 +237,20 @@ export function createVM(elm: HTMLElement, Ctor: ComponentConstructor, options: 
         elm,
         data: EmptyObject,
         context: create(null),
-        cmpTemplate: undefined,
         cmpProps: create(null),
         cmpTrack: create(null),
         cmpSlots: useSyntheticShadow ? create(null) : undefined,
         callHook,
         setHook,
         getHook,
-        component: undefined,
         children: EmptyArray,
         aChildren: EmptyArray,
         velements: EmptyArray,
-        // used to track down all object-key pairs that makes this vm reactive
-        deps: [],
+        // Perf optimization to preserve the shape of this obj
+        cmpTemplate: undefined,
+        component: undefined,
+        tro: undefined,
+        oar: undefined,
     };
 
     if (process.env.NODE_ENV !== 'production') {
@@ -405,7 +422,6 @@ function runDisconnectedCallback(vm: VM) {
         // of disconnected components.
         markComponentAsDirty(vm);
     }
-    clearReactiveListeners(vm);
     vm.state = VMState.disconnected;
     // reporting disconnection
     const { disconnected } = Services;

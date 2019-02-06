@@ -1,11 +1,11 @@
 {
-    "name": "@lwc/wire-service",
-    "version": "1.0.0",
-    "description": "@wire service",
+    "name": "@lwc/reactive-service",
+    "version": "0.36.0",
+    "description": "LWC Reactive Service",
     "license": "MIT",
-    "main": "dist/commonjs/es2017/wire.js",
-    "module": "dist/modules/es2017/wire.js",
-    "typings": "lib/index.d.ts",
+    "main": "dist/commonjs/es2017/reactive.js",
+    "module": "dist/modules/es2017/reactive.js",
+    "typings": "lib/reactive.d.ts",
     "scripts": {
         "clean": "rm -rf dist/ lib/",
         "test": "jest",
@@ -15,14 +15,11 @@
         "serve:playground": "node playground/server.js"
     },
     "devDependencies": {
-        "@lwc/compiler": "1.0.0",
-        "@lwc/engine": "1.0.0",
-        "@lwc/rollup-plugin": "1.0.0",
         "express": "^4.15.2"
     },
     "lwc": {
         "modules": {
-            "wire-service": "dist/modules/es2017/wire.js"
+            "reactive-service": "dist/modules/es2017/reactive.js"
         }
     },
     "publishConfig": {
