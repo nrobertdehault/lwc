@@ -4,14 +4,14 @@ import Parent from 'x/parent';
 
 describe('Reactivity for setters', () => {
     it('should not alter rendering if they are not invoked', () => {
-        let elm = createElement('x-test', { is: Parent });
+        const elm = createElement('x-test', { is: Parent });
         document.body.appendChild(elm);
         expect(elm.getRenderingCounter()).toBe(1);
         expect(elm.shadowRoot.querySelector('x-child.first').getRenderingCounter()).toBe(1);
     });
 
     it('should react to changes in parent by calling the setter on the child once', () => {
-        let elm = createElement('x-test', { is: Parent });
+        const elm = createElement('x-test', { is: Parent });
         document.body.appendChild(elm);
         elm.addNewItem(4);
         return Promise.resolve().then(() => {
@@ -25,7 +25,7 @@ describe('Reactivity for setters', () => {
     });
 
     it('should ignore string value passed to setters', () => {
-        let elm = createElement('x-test', { is: Parent });
+        const elm = createElement('x-test', { is: Parent });
         document.body.appendChild(elm);
         elm.setCity('sanfrancisco');
         return Promise.resolve().then(() => {
