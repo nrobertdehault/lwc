@@ -10,7 +10,7 @@ const typescript = require('rollup-plugin-typescript');
 const { version } = require('../../package.json');
 const { generateTargetName } = require('./util');
 
-const entry = path.resolve(__dirname, '../../src/reactive.ts');
+const entry = path.resolve(__dirname, '../../src/index.ts');
 const commonJSDirectory = path.resolve(__dirname, '../../dist/commonjs');
 const modulesDirectory = path.resolve(__dirname, '../../dist/modules');
 
@@ -32,7 +32,7 @@ function rollupConfig(config) {
             banner,
             footer,
         },
-        plugins: [typescript({ target: target, typescript: require('typescript') })],
+        plugins: [typescript({ target, typescript: require('typescript') })],
     };
 }
 

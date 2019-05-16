@@ -11,7 +11,7 @@ const typescript = require('rollup-plugin-typescript');
 const { version } = require('../../package.json');
 const { generateTargetName } = require('./util');
 
-const input = path.resolve(__dirname, '../../src/reactive.ts');
+const input = path.resolve(__dirname, '../../src/index.ts');
 const outputDir = path.resolve(__dirname, '../../dist/umd');
 
 const banner = `/**\n * Copyright (C) 2017 salesforce.com, inc.\n */`;
@@ -21,7 +21,7 @@ function rollupConfig(config) {
     const { format, target } = config;
 
     return {
-        input: input,
+        input,
         output: {
             file: path.join(outputDir + `/${target}`, generateTargetName(config)),
             name: 'ReactiveService',
@@ -30,7 +30,7 @@ function rollupConfig(config) {
             footer,
         },
         plugins: [
-            typescript({ target: target, typescript: require('typescript') }),
+            typescript({ target, typescript: require('typescript') }),
             rollupReplacePlugin({ 'process.env.NODE_ENV': JSON.stringify('development') }),
         ],
     };
