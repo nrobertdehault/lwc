@@ -1,6 +1,6 @@
 {
     "name": "@lwc/reactive-service",
-    "version": "0.40.0",
+    "version": "1.0.0",
     "description": "LWC Reactive Service",
     "license": "MIT",
     "main": "dist/commonjs/es2017/reactive.js",
@@ -14,5 +14,10 @@
     },
     "publishConfig": {
         "access": "public"
+    },
+    "lwc": {
+        "modules": {
+            "@lwc/reactive-service": "dist/modules/es2017/reactive.js"
+        }
     }
 }
