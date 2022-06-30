@@ -6,7 +6,7 @@
  */
 import * as t from '../shared/estree';
 import { toPropertyName } from '../shared/utils';
-import { BaseElement, ChildNode, LWCDirectiveRenderMode, Node, Root } from '../shared/types';
+import { BaseElement, ChildNode, Node, Root } from '../shared/types';
 import {
     isParentNode,
     isSlot,
@@ -87,7 +87,7 @@ export function shouldFlatten(codeGen: CodeGen, children: ChildNode[]): boolean 
                     // If node is only a control flow node and does not map to a stand alone element.
                     // Search children to determine if it should be flattened.
                     (isIf(child) && shouldFlatten(codeGen, child.children)) ||
-                    (codeGen.renderMode === LWCDirectiveRenderMode.light && isSlot(child))))
+                    (true && isSlot(child))))
     );
 }
 
@@ -163,14 +163,12 @@ export function generateTemplateMetadata(codeGen: CodeGen): t.Statement[] {
     metadataExpressions.push(t.expressionStatement(stylesheetsMetadata));
 
     // ignore when shadow because we don't want to modify template unnecessarily
-    if (codeGen.renderMode === LWCDirectiveRenderMode.light) {
-        const renderModeMetadata = t.assignmentExpression(
-            '=',
-            t.memberExpression(t.identifier(TEMPLATE_FUNCTION_NAME), t.identifier('renderMode')),
-            t.literal('light')
-        );
-        metadataExpressions.push(t.expressionStatement(renderModeMetadata));
-    }
+    const renderModeMetadata = t.assignmentExpression(
+        '=',
+        t.memberExpression(t.identifier(TEMPLATE_FUNCTION_NAME), t.identifier('renderMode')),
+        t.literal('light')
+    );
+    metadataExpressions.push(t.expressionStatement(renderModeMetadata));
 
     return metadataExpressions;
 }
