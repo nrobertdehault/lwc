@@ -44,6 +44,9 @@ import { Template, isUpdatingTemplate, getVMBeingRendered } from './template';
 import { HTMLElementConstructor } from './base-bridge-element';
 import { lockerLivePropertyKey } from './membrane';
 
+const { log } = console;
+log('Patched LWC');
+
 /**
  * This operation is called with a descriptor of an standard html property
  * that a Custom Element can support (including AOM properties), which
@@ -470,6 +473,7 @@ LightningElement.prototype = {
     },
 
     get template(): ShadowRoot | null {
+        return this as any;
         const vm = getAssociatedVM(this);
 
         if (process.env.NODE_ENV !== 'production') {
