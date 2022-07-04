@@ -1,6 +1,6 @@
 {
     "name": "@lwc/engine-server",
-    "version": "2.14.0",
+    "version": "2.14.1-canary-ssr.3",
     "description": "Renders LWC components in a server environment.",
     "homepage": "https://lwc.dev/",
     "repository": {
