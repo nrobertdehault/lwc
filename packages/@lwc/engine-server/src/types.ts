@@ -43,17 +43,18 @@ export interface HostShadowRoot {
     children: HostChildNode[];
     mode: 'open' | 'closed';
     delegatesFocus: boolean;
+    parent: HostElement;
 }
 
 export interface HostElement {
     [HostTypeAttr]: HostNodeType.Element;
     tagName: string;
     namespace: string;
-    parent: HostElement | null;
+    parent: HostElement | HostShadowRoot | null;
     shadowRoot: HostShadowRoot | null;
     children: HostChildNode[];
     attributes: HostAttribute[];
-    eventListeners: Record<string, Function[]>;
+    eventListeners: Record<string, Set<EventListener>>;
 }
 
 export type HostNode = HostText | HostElement | HostComment;
