@@ -24,6 +24,7 @@ import {
     HostNodeType,
     HostChildNode,
     HostShadowRoot,
+    HostTypeAttr,
 } from './types';
 import { classNameToTokenList, tokenListToClassName } from './utils/classes';
 
@@ -35,8 +36,8 @@ function unsupportedMethod(name: string): () => never {
 
 function createElement(name: string, namespace?: string): HostElement {
     return {
-        type: HostNodeType.Element,
-        name,
+        [HostTypeAttr]: HostNodeType.Element,
+        tagName: name,
         namespace: namespace ?? HTML_NAMESPACE,
         parent: null,
         shadowRoot: null,
@@ -107,7 +108,7 @@ function cloneNode(node: N): N {
 
 function createFragment(html: string): HostChildNode {
     return {
-        type: HostNodeType.Raw,
+        [HostTypeAttr]: HostNodeType.Raw,
         parent: null,
         value: html,
     };
@@ -115,7 +116,7 @@ function createFragment(html: string): HostChildNode {
 
 function createText(content: string): HostNode {
     return {
-        type: HostNodeType.Text,
+        [HostTypeAttr]: HostNodeType.Text,
         value: String(content),
         parent: null,
     };
@@ -123,7 +124,7 @@ function createText(content: string): HostNode {
 
 function createComment(content: string): HostNode {
     return {
-        type: HostNodeType.Comment,
+        [HostTypeAttr]: HostNodeType.Comment,
         value: content,
         parent: null,
     };
@@ -142,7 +143,7 @@ function nextSibling(node: N) {
 
 function attachShadow(element: E, config: ShadowRootInit) {
     element.shadowRoot = {
-        type: HostNodeType.ShadowRoot,
+        [HostTypeAttr]: HostNodeType.ShadowRoot,
         children: [],
         mode: config.mode,
         delegatesFocus: !!config.delegatesFocus,
@@ -157,11 +158,11 @@ function getProperty(node: N, key: string) {
         return (node as any)[key];
     }
 
-    if (node.type === HostNodeType.Element) {
+    if (node[HostTypeAttr] === HostNodeType.Element) {
         const attrName = htmlPropertyToAttribute(key);
 
         // Handle all the boolean properties.
-        if (isBooleanAttribute(attrName, node.name)) {
+        if (isBooleanAttribute(attrName, node.tagName)) {
             return getAttribute(node, attrName) ?? false;
         }
 
@@ -172,7 +173,7 @@ function getProperty(node: N, key: string) {
 
         // Handle special elements live bindings. The checked property is already handled above
         // in the boolean case.
-        if (node.name === 'input' && key === 'value') {
+        if (node.tagName === 'input' && key === 'value') {
             return getAttribute(node, 'value') ?? '';
         }
     }
@@ -188,13 +189,13 @@ function setProperty(node: N, key: string, value: any): void {
         return ((node as any)[key] = value);
     }
 
-    if (node.type === HostNodeType.Element) {
+    if (node[HostTypeAttr] === HostNodeType.Element) {
         const attrName = htmlPropertyToAttribute(key);
 
         if (key === 'innerHTML') {
             node.children = [
                 {
-                    type: HostNodeType.Raw,
+                    [HostTypeAttr]: HostNodeType.Raw,
                     parent: node,
                     value,
                 },
@@ -203,7 +204,7 @@ function setProperty(node: N, key: string, value: any): void {
         }
 
         // Handle all the boolean properties.
-        if (isBooleanAttribute(attrName, node.name)) {
+        if (isBooleanAttribute(attrName, node.tagName)) {
             return value === true
                 ? setAttribute(node, attrName, '')
                 : removeAttribute(node, attrName);
@@ -216,7 +217,7 @@ function setProperty(node: N, key: string, value: any): void {
 
         // Handle special elements live bindings. The checked property is already handled above
         // in the boolean case.
-        if (node.name === 'input' && attrName === 'value') {
+        if (node.tagName === 'input' && attrName === 'value') {
             return isNull(value) || isUndefined(value)
                 ? removeAttribute(node, 'value')
                 : setAttribute(node, 'value', value);
@@ -230,12 +231,12 @@ function setProperty(node: N, key: string, value: any): void {
 }
 
 function setText(node: N, content: string) {
-    if (node.type === HostNodeType.Text) {
+    if (node[HostTypeAttr] === HostNodeType.Text) {
         node.value = content;
-    } else if (node.type === HostNodeType.Element) {
+    } else if (node[HostTypeAttr] === HostNodeType.Element) {
         node.children = [
             {
-                type: HostNodeType.Text,
+                [HostTypeAttr]: HostNodeType.Text,
                 parent: node,
                 value: content,
             },
@@ -344,7 +345,7 @@ function addEventListener(
     callback: EventListener,
     useCaptureOrOptions?: AddEventListenerOptions | boolean
 ): void {
-    if (node.type !== 'element') {
+    if (node[HostTypeAttr] !== 'element') {
         return;
     }
 
@@ -384,7 +385,7 @@ function removeEventListener(
     callback: EventListener
     // captured listeners aren't supported in SSR, so options are ignored
 ): void {
-    if (node.type !== 'element') {
+    if (node[HostTypeAttr] !== 'element') {
         return;
     }
     const eventListeners = node.eventListeners[type];
@@ -394,8 +395,8 @@ function removeEventListener(
 }
 
 type EventProperty = keyof Event;
-function dispatchEvent(target: HostNode, event: Event): boolean {
-    if (target.type !== 'element') {
+export function dispatchEvent(target: HostNode, event: Event): boolean {
+    if (target[HostTypeAttr] !== 'element') {
         return true;
     }
 
@@ -422,7 +423,7 @@ function dispatchEvent(target: HostNode, event: Event): boolean {
     });
 
     do {
-        if (currentNode.type === HostNodeType.Element) {
+        if (currentNode[HostTypeAttr] === HostNodeType.Element) {
             const callbacks: Set<EventListener> | undefined =
                 currentNode.eventListeners[event.type];
             if (callbacks) {
@@ -437,9 +438,7 @@ function dispatchEvent(target: HostNode, event: Event): boolean {
     } while (
         !stop &&
         currentNode &&
-        // Events do not propagate through shadow boundaries unless composed
-        // is set to true.
-        (currentNode.type !== HostNodeType.ShadowRoot || event.composed === true)
+        (currentNode[HostTypeAttr] !== HostNodeType.ShadowRoot || event.composed === true)
     );
 
     // `preventDefault` is not supported, so the return value will never be false.
