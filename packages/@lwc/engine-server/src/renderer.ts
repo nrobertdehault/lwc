@@ -32,7 +32,6 @@ import {
     HostChildrenKey,
     HostValueKey,
     HostShadowRoot,
-    HostTypeAttr,
 } from './types';
 import { classNameToTokenList, tokenListToClassName } from './utils/classes';
 
@@ -354,7 +353,7 @@ function addEventListener(
     callback: EventListener,
     useCaptureOrOptions?: AddEventListenerOptions | boolean
 ): void {
-    if (node[HostTypeAttr] !== 'element') {
+    if (node[HostTypeKey] !== 'element') {
         return;
     }
 
@@ -382,10 +381,10 @@ function addEventListener(
         // is also ignored.
     }
 
-    if (!(type in node.eventListeners)) {
-        node.eventListeners[type] = new Set();
+    if (!(type in node[HostEventListenersKey])) {
+        node[HostEventListenersKey][type] = new Set();
     }
-    node.eventListeners[type].add(savedCallback);
+    node[HostEventListenersKey][type].add(savedCallback);
 }
 
 function removeEventListener(
@@ -394,10 +393,10 @@ function removeEventListener(
     callback: EventListener
     // captured listeners aren't supported in SSR, so options are ignored
 ): void {
-    if (node[HostTypeAttr] !== 'element') {
+    if (node[HostTypeKey] !== 'element') {
         return;
     }
-    const eventListeners = node.eventListeners[type];
+    const eventListeners = node[HostEventListenersKey][type];
     if (eventListeners) {
         eventListeners.delete(callback);
     }
@@ -405,7 +404,7 @@ function removeEventListener(
 
 type EventProperty = keyof Event;
 export function dispatchEvent(target: HostNode, event: Event): boolean {
-    if (target[HostTypeAttr] !== 'element') {
+    if (target[HostTypeKey] !== 'element') {
         return true;
     }
 
@@ -432,9 +431,9 @@ export function dispatchEvent(target: HostNode, event: Event): boolean {
     });
 
     do {
-        if (currentNode[HostTypeAttr] === HostNodeType.Element) {
+        if (currentNode[HostTypeKey] === HostNodeType.Element) {
             const callbacks: Set<EventListener> | undefined =
-                currentNode.eventListeners[event.type];
+                currentNode[HostEventListenersKey][event.type];
             if (callbacks) {
                 for (const callback of callbacks) {
                     if (!stopImmediately) {
@@ -443,11 +442,11 @@ export function dispatchEvent(target: HostNode, event: Event): boolean {
                 }
             }
         }
-        currentNode = currentNode.parent;
+        currentNode = currentNode[HostParentKey];
     } while (
         !stop &&
         currentNode &&
-        (currentNode[HostTypeAttr] !== HostNodeType.ShadowRoot || event.composed === true)
+        (currentNode[HostTypeKey] !== HostNodeType.ShadowRoot || event.composed === true)
     );
 
     // `preventDefault` is not supported, so the return value will never be false.
