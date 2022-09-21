@@ -153,10 +153,7 @@ function createComponentDef(Ctor: LightningElementConstructor): ComponentDef {
         shadowSupportMode = ctorShadowSupportMode;
     }
 
-    let renderMode = superDef.renderMode;
-    if (!isUndefined(ctorRenderMode)) {
-        renderMode = ctorRenderMode === 'light' ? RenderMode.Light : RenderMode.Shadow;
-    }
+    const renderMode = 0;
 
     const template = getComponentRegisteredTemplate(Ctor) || superDef.template;
     const name = Ctor.name || superDef.name;

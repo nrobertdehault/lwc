@@ -53,6 +53,7 @@ export interface HostShadowRoot {
     [HostChildrenKey]: HostChildNode[];
     mode: 'open' | 'closed';
     delegatesFocus: boolean;
+    parent: HostElement;
 }
 
 export interface HostElement {
@@ -61,11 +62,11 @@ export interface HostElement {
     // explicitly given only a getter, so it doesn't need to be a Symbol.
     tagName: string;
     [HostNamespaceKey]: string;
-    [HostParentKey]: HostElement | null;
+    [HostParentKey]: HostElement | HostShadowRoot | null;
     [HostShadowRootKey]: HostShadowRoot | null;
     [HostChildrenKey]: HostChildNode[];
     [HostAttributesKey]: HostAttribute[];
-    [HostEventListenersKey]: Record<string, Function[]>;
+    [HostEventListenersKey]: Record<string, Set<EventListener>>;
 }
 
 export type HostNode = HostText | HostElement | HostComment;
